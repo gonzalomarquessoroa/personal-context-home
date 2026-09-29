@@ -2,11 +2,11 @@
 
 Decisiones propuestas en Fase 0, 29 de septiembre de 2026. Las sujetas a prueba se revisarán antes de construir sobre ellas.
 
-## D-001 · .NET 10 + WPF para Windows (propuesta)
+## D-001 · .NET 10 para el núcleo y WPF para la interfaz futura
 
-La primera distribución será solo Windows. WPF permite una interfaz nativa sencilla con una sola plataforma y sin runtime web o Node instalado por el usuario. .NET 10 tiene soporte hasta noviembre de 2028 según [Microsoft Lifecycle](https://learn.microsoft.com/en-us/lifecycle/products/microsoft-net-and-net-core). El núcleo se mantendrá independiente de WPF para facilitar pruebas. Coste: el desarrollo requiere SDK .NET; en esta máquina no está disponible todavía. No se implementa interfaz en Fase 1.
+La primera distribución será solo Windows. WPF permite una interfaz nativa sencilla con una sola plataforma y sin runtime web o Node instalado por el usuario. .NET 10 tiene soporte hasta noviembre de 2028 según [Microsoft Lifecycle](https://learn.microsoft.com/en-us/lifecycle/products/microsoft-net-and-net-core). El núcleo ya es independiente de WPF para facilitar pruebas. El SDK .NET 10 se instaló localmente para el desarrollo; no se implementa interfaz en Fase 1.
 
-## D-002 · SQLite local sin ORM (propuesta)
+## D-002 · SQLite local sin ORM (implementada)
 
 Una base por usuario evita servidor y credenciales. `Microsoft.Data.Sqlite` proporciona acceso directo y ligero. Usaremos SQL explícito y migraciones pequeñas; introducir un ORM solo si reduce complejidad real. La base reside en el perfil local, no se cifra en la primera fase. [Referencia de Microsoft](https://learn.microsoft.com/en-us/dotnet/standard/data/sqlite/).
 
@@ -25,3 +25,7 @@ Publicar `win-x64 --self-contained` evita instalar .NET al usuario. Un instalado
 ## D-005 · Sin LLM en el núcleo inicial (decidido)
 
 Ingestión, deduplicación exacta, persistencia, búsqueda textual y exportación no necesitan un modelo. Extracción semántica, equivalencias y contradicciones se evaluarán más adelante con lotes pequeños de mensajes nuevos y coste medido. Nunca enviar conversaciones completas a un servicio externo por defecto.
+
+## D-006 · Repositorio público, datos locales fuera de Git (decidido)
+
+El código se publicará en GitHub sin conversaciones, bases de datos, importaciones, exportaciones, SDK local ni secretos. `.gitignore` excluye estas rutas habituales, pero no sustituye la revisión de archivos y del historial antes del primer push. El autor de los commits locales usa la dirección privada `noreply` de GitHub. El primer commit se reescribió antes de crear un remoto para retirar el correo personal de la historia que se publicará. Véase [GitHub Docs: commit email](https://docs.github.com/en/account-and-profile/how-tos/email-preferences/setting-your-commit-email-address).

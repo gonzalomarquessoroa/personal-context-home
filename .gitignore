@@ -1,0 +1,28 @@
+# Local development tools and build output
+.tools/
+**/bin/
+**/obj/
+**/TestResults/
+.vs/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.user
+*.suo
+*.pfx
+*.pem
+*.key
+
+# Personal data and local databases
+data/
+imports/
+exports/
+backups/
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*

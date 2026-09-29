@@ -1,8 +1,10 @@
 # Arquitectura
 
-## Estado real al terminar la Fase 0
+## Estado real durante la Fase 1
 
-Solo existen documentación y decisiones. No hay ejecutables, esquema SQLite, extensión, instalador ni pruebas de captura. El diseño siguiente es el objetivo mínimo para las próximas fases.
+Existen `PersonalContext.Core`, `PersonalContext.Storage` y pruebas xUnit. El núcleo valida observaciones normalizadas y guarda proveedores, proyectos, conversaciones, mensajes, revisiones y estado de captura en SQLite. Usa `PRAGMA user_version = 1` para la primera migración, transacciones e índices de identidad. Las pruebas cubren reapertura, inicialización concurrente, reintentos idempotentes, 120 mensajes seguidos de 10 nuevos, revisiones, proyecto, lote inválido y estado de error. No existen todavía interfaz, extensión, host Native Messaging, importador ni instalador.
+
+El diagrama siguiente representa los componentes previstos, no los ya implementados.
 
 ## Componentes previstos
 
@@ -50,12 +52,12 @@ Se implementará de forma gradual. Campos `id` son claves locales; `external_*` 
 | `projects` | `id`, `provider_id`, `external_id`, `name`, `observed_at` | `(provider_id, external_id)` único cuando se conozca |
 | `conversations` | `id`, `provider_id`, `external_id`, `project_id?`, `title`, `first_seen_at`, `last_seen_at` | `(provider_id, external_id)` único |
 | `messages` | `id`, `conversation_id`, `source_key`, `role`, `ordinal`, `body`, `body_hash`, `observed_at` | `(conversation_id, source_key)` único |
-| `message_revisions` | `id`, `message_id`, `body`, `body_hash`, `observed_at` | historial de cambios de contenido |
+| `message_revisions` | `id`, `message_id`, `role`, `ordinal`, `body`, `body_hash`, `observed_at`, `replaced_at` | historial de cambios del mensaje |
 | `memories` | `id`, `category`, `title`, `content`, `status`, `confidence?`, `valid_from?`, `valid_to?`, `created_at`, `updated_at` | estado `pending / confirmed / outdated / conflicting` |
 | `memory_sources` | `memory_id`, `message_id`, `evidence_note?` | procedencia de varios mensajes |
 | `capture_state` | `provider_id`, `conversation_id?`, `last_observed_at`, `last_success_at`, `last_error?`, `coverage` | estado visible para diagnóstico |
 
-`source_key` será obligatorio en el contrato interno y estable entre reintentos; el adaptador debe declarar cómo la obtuvo. Si el prototipo no logra una clave segura, el esquema podrá incorporar una identidad provisional y revisión antes de capturar datos de uso real. `Person`, `Goal`, `Decision`, `Preference` y `Tool` son **categorías o relaciones de memoria**, no tablas independientes en V0. `Project` puede quedar sin `external_id` hasta confirmar una señal fiable. `Memory` y sus fuentes se crearán en la fase de memoria, no en la primera migración si aún no se usan.
+`source_key` es obligatorio en el contrato interno y estable entre reintentos; el adaptador debe declarar cómo lo obtuvo. Si el prototipo no logra una clave segura, el esquema deberá evolucionar antes de capturar datos de uso real. `Person`, `Goal`, `Decision`, `Preference` y `Tool` serán **categorías o relaciones de memoria**, no tablas independientes en V0. Un proyecto solo se guarda cuando el adaptador conoce su `external_id`; la conversación puede conservarse sin proyecto. `Memory` y sus fuentes se crearán en la fase de memoria; aún no forman parte de la migración 001.
 
 ## Datos y seguridad
 

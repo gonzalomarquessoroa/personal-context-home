@@ -5,7 +5,7 @@ El orden es orientativo. Cada fase termina con una capacidad verificable, no sol
 | Fase | Resultado | Estado |
 | --- | --- | --- |
 | 0 | Alcance, stack, modelo, estrategia de captura y backlog | Completada en documentación; captura por validar |
-| 1 | Núcleo local, esquema mínimo e ingestión idempotente con datos de prueba | Siguiente |
+| 1 | Núcleo local, esquema mínimo e ingestión idempotente con datos de prueba | En curso: núcleo y pruebas completados; falta prueba de viabilidad de captura |
 | 2 | Primer ejecutable e instalación sin prerequisitos para el usuario | Pendiente |
 | 3 | Prueba y adaptador de captura ChatGPT en navegador | Pendiente; puerta de viabilidad |
 | 4 | Flujo incremental y recuperación ante fallos de entrega | Pendiente |

@@ -4,12 +4,12 @@
 
 Orden sugerido para cambios pequeños y completos:
 
-1. **Preparar solución y herramienta de desarrollo.** Instalar SDK .NET 10 en el entorno de desarrollo; crear solución, biblioteca `Core`, biblioteca `Storage` y proyecto de pruebas. Añadir `.gitignore` de .NET y una instrucción de ejecución para desarrolladores. No afecta a la instalación final de usuario.
-2. **Migración SQLite 001.** Crear `providers`, `projects`, `conversations`, `messages`, `message_revisions` y `capture_state` con claves únicas e índices. Crear la base bajo `%LOCALAPPDATA%` y registrar versión. Verificar creación en instalación limpia y reapertura sin cambios.
-3. **Contrato de observación.** Definir DTO normalizado independiente de ChatGPT y validación de tamaño, rol, claves e identificador de conversación. Incluir un origen de prueba local; aún sin extensión.
-4. **Ingestión transaccional.** Insertar un lote, reintentar el mismo sin duplicados, añadir mensajes nuevos y registrar una revisión cuando cambie el contenido de una clave conocida. Devolver conteos de insertados, actualizados y repetidos. Probar que un lote inválido no deja escritura parcial.
-5. **Consultas mínimas de diagnóstico.** Leer conversaciones y mensajes guardados, y la última captura/error. Una pequeña utilidad de desarrollo puede ejercer el flujo mientras no exista WPF.
-6. **Prueba de viabilidad de ChatGPT antes del adaptador completo.** Extensión local temporal + host que acepte un lote de ejemplo; medir chat nuevo, continuación, ediciones, regeneración, proyecto y reinicio. Documentar IDs disponibles, contenido invisible, cambios de DOM y si existe una ruta viable de instalación de extensión para un usuario no técnico. Esta prueba decide el diseño de Fase 3.
+1. **Hecho: preparar solución y herramienta de desarrollo.** SDK .NET 10 local, solución, bibliotecas `Core` y `Storage`, xUnit, `.gitignore` e instrucciones de desarrollo. No afecta a la instalación final de usuario.
+2. **Hecho: migración SQLite 001.** `providers`, `projects`, `conversations`, `messages`, `message_revisions` y `capture_state`, con claves únicas e índices. Base bajo `%LOCALAPPDATA%` por defecto y versión en `PRAGMA user_version`.
+3. **Hecho: contrato de observación.** DTO normalizado independiente de ChatGPT y validación de tamaño, rol, claves e identificador de conversación. Los datos sintéticos de las pruebas sirven como origen local; aún sin extensión.
+4. **Hecho: ingestión transaccional.** El mismo lote no duplica contenido; añadir 10 mensajes después de 120 añade solo 10. Los cambios de contenido, rol u orden guardan una revisión. Un lote inválido no escribe mensajes parciales.
+5. **Hecho: consultas mínimas de diagnóstico.** Lectura de conversaciones, mensajes y última captura/error desde el núcleo. La utilidad de desarrollo queda opcional.
+6. **Siguiente: prueba de viabilidad de ChatGPT antes del adaptador completo.** Extensión local temporal + host que acepte un lote de ejemplo; medir chat nuevo, continuación, ediciones, regeneración, proyecto y reinicio. Documentar IDs disponibles, contenido invisible, cambios de DOM y si existe una ruta viable de instalación de extensión para un usuario no técnico. Esta prueba decide el diseño de Fase 3 y requiere una sesión de ChatGPT en un navegador Chromium de pruebas.
 
 ## Criterios de aceptación de Fase 1
 
@@ -27,4 +27,5 @@ Orden sugerido para cambios pequeños y completos:
 2. **Proyectos:** la asociación puede no estar presente o ser ambigua en la página. Se guardará solo cuando haya evidencia.
 3. **Instalación:** extensión y host deben enlazarse sin terminal; IDs de tienda y firma pueden complicar el flujo.
 4. **Privacidad:** la base inicial no tiene cifrado de aplicación; explicar protección real, exportación legible y borrado.
-5. **Entorno de desarrollo:** `dotnet` e Inno Setup no están instalados en esta máquina; se necesitan para compilar y empaquetar, pero nunca en la máquina de los usuarios.
+5. **Entorno de desarrollo:** el SDK .NET 10 ya está instalado localmente en `.tools`; Inno Setup se necesitará al empaquetar, pero nunca en la máquina de los usuarios.
+6. **Repositorio público:** no subir datos reales, archivos `.env`, bases locales ni exportaciones; comprobar también la dirección de autor en todo el historial antes del primer push.

@@ -4,7 +4,7 @@ Memoria personal local y reutilizable a partir de conversaciones con asistentes 
 
 ## Estado
 
-**Fase 0 técnica completada; todavía no hay aplicación ni captura funcional.** Este directorio estaba vacío al comenzar. La propuesta de captura necesita una prueba real antes de prometer sincronización automática fiable. La [arquitectura](docs/architecture.md) distingue el estado actual del diseño previsto.
+**Fase 1 en curso: núcleo local implementado y probado; todavía no hay aplicación de escritorio ni captura de ChatGPT.** La propuesta de captura necesita una prueba real antes de prometer sincronización automática fiable. La [arquitectura](docs/architecture.md) distingue el estado actual del diseño previsto.
 
 ## Decisión técnica inicial
 
@@ -26,4 +26,19 @@ La documentación de la API de OpenAI describe conversaciones creadas y gestiona
 
 ## Próximo paso
 
-Implementar el núcleo local y su contrato de ingestión con pruebas de idempotencia. Antes de construir el adaptador de ChatGPT, realizar una prueba corta con la extensión y el puente local para validar la cobertura real de la captura.
+Realizar una prueba corta con la extensión y el puente local para validar la cobertura real de la captura, antes de construir el adaptador de ChatGPT.
+
+## Desarrollo
+
+Solo quien desarrolla necesita el SDK .NET 10. La aplicación distribuida se publicará con su runtime incluido. Para compilar y probar desde PowerShell:
+
+```powershell
+dotnet restore PersonalContext.sln --configfile NuGet.Config
+dotnet test PersonalContext.sln --no-restore
+```
+
+El SDK también puede instalarse de forma local en `.tools/dotnet`, carpeta excluida de Git. Las pruebas usan bases temporales y no requieren cuenta de OpenAI.
+
+## Repositorio público y datos privados
+
+Este código está preparado para publicarse, pero **no** se deben añadir conversaciones reales, bases de datos, exportaciones, claves ni archivos `.env`. `.gitignore` excluye las rutas locales habituales; antes de cada publicación se revisarán los archivos incluidos y el historial de Git. Los commits deben usar la dirección privada `noreply` configurada en GitHub.
