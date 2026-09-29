@@ -4,16 +4,16 @@ Memoria personal local y reutilizable a partir de conversaciones con asistentes 
 
 ## Estado
 
-**Fase 1 en curso: núcleo local implementado y probado; existen una extensión y un host de prueba, todavía sin captura verificada en Chrome ni aplicación de escritorio.** La propuesta de captura necesita una prueba real antes de prometer sincronización automática fiable. La [arquitectura](docs/architecture.md) distingue el estado actual del diseño previsto.
+**Fase 1 completada: núcleo local probado y enlace real Chrome–host verificado con chats ficticios.** La extensión experimental identifica mensajes visibles y proyectos, pero la mayoría de roles no se distinguen en el DOM actual. No existe todavía aplicación de escritorio ni captura apta para datos personales. La [arquitectura](docs/architecture.md) distingue el estado actual del diseño previsto.
 
-Una [prueba exploratoria de ChatGPT en Chrome](docs/chatgpt-capture-spike.md) comprobó chats y proyectos ficticios. Encontró que editar o regenerar crea nuevas versiones con IDs distintos. El nuevo puente y el observador pasaron pruebas locales con datos sintéticos, pero falta cargar la extensión en Chrome y comprobar su extracción en chats ficticios reales.
+La [prueba real de Chrome](docs/chatgpt-capture-spike.md) comprobó el puente y el observador con conversaciones ficticias: continuación, edición, regeneración, recarga, proyectos y navegación entre chats. Las ediciones y regeneraciones crean versiones con IDs distintos. La cobertura de ramas y mensajes fuera de pantalla sigue sin verificarse.
 
 ## Decisión técnica inicial
 
 - Aplicación Windows en C# con .NET 10 y WPF; lógica y almacenamiento separados de la interfaz.
 - SQLite en el perfil local del usuario, sin servidor ni cuenta.
 - Instalador Windows por usuario, con binarios .NET autocontenidos. Inno Setup es el candidato inicial porque también debe registrar el puente con la extensión del navegador.
-- Extensión Chromium Manifest V3 con acceso limitado a ChatGPT y comunicación con un proceso local mediante Native Messaging. Es una **hipótesis de implementación**, pendiente de prueba con chats nuevos, continuaciones, ediciones y proyectos.
+- Extensión Chromium Manifest V3 con acceso limitado a ChatGPT y comunicación con un proceso local mediante Native Messaging. El enlace funciona en la prueba; la **viabilidad de captura completa sigue condicionada** por los roles, ramas y cobertura del DOM.
 - Sin API de modelos ni suscripción adicional en las primeras fases. La extracción de memoria se evaluará después de disponer de datos incrementales fiables.
 
 La documentación de la API de OpenAI describe conversaciones creadas y gestionadas mediante la API; no establece una vía para leer el historial personal de la interfaz de ChatGPT. No basaremos la captura en endpoints privados ni en cookies de sesión. Véase [OpenAI Docs: Conversation state](https://developers.openai.com/api/docs/guides/conversation-state).
@@ -28,7 +28,7 @@ La documentación de la API de OpenAI describe conversaciones creadas y gestiona
 
 ## Próximo paso
 
-Completar la [prueba guiada de la extensión y el puente](docs/chatgpt-capture-spike.md#prototipo-de-extensión-y-puente-local) con chats ficticios antes de construir el adaptador de ChatGPT.
+Resolver las [lagunas detectadas en la prueba](docs/chatgpt-capture-spike.md#resultado-y-limites-de-la-prueba-real) antes de conectar el adaptador de ChatGPT a SQLite.
 
 ## Desarrollo
 

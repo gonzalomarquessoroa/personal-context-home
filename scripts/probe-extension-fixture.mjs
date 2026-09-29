@@ -7,7 +7,7 @@ import vm from "node:vm";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const source = readFileSync(path.join(root, "providers", "chatgpt", "extension", "content.js"), "utf8");
 const conversation = "1845e62f-0ca5-4f39-b114-ec862d795029";
-const project = "25a978a6-c58a-4b63-9b86-ae93331677e9";
+const project = "g-p-25a978a6c58a4b639b86ae93331677e9";
 const user = "23349274-516a-447e-9d60-4396966d160f";
 const assistant = "bd129339-a388-4c7b-9e66-6ca0548366cb";
 const continuationUser = "65c82821-a1b9-4e23-a38c-15130bde721e";
@@ -32,7 +32,7 @@ const document = {
     return [];
   }
 };
-const location = { pathname: `/g/${project}/c/${conversation}` };
+const location = { pathname: `/g/${project}-proyecto-ficticio/c/${conversation}` };
 class MutationObserver {
   constructor(callback) { observer = callback; }
   observe() {}
@@ -47,16 +47,21 @@ const context = {
   chrome: { runtime: { async sendMessage(batch) {
     sent.push(batch);
     return { ok: true, visible: batch.messages.length, added: batch.messages.length,
-      noLongerVisible: 0 };
+      noLongerVisible: 0, projectObserved: Boolean(batch.projectId) };
   } } }
 };
 
-function message(id, role, body = "Texto ficticio") {
+function message(id, role, body = "Texto ficticio", parentClass = "", rendered = true) {
   return {
     innerText: body,
-    getAttribute: () => `${id} ${id}`,
-    closest: () => ({ getAttribute: () => role }),
-    querySelector: () => null
+    getAttribute: name => name === "data-chatgpt-search-message-ids" ? `${id} ${id}` : null,
+    closest: selector => selector === '[data-message-author-role]' && role
+      ? { getAttribute: () => role } : null,
+    querySelector: () => null,
+    getClientRects: () => rendered ? [{}] : [],
+    parentElement: parentClass
+      ? { tagName: "DIV", className: parentClass, getAttribute: () => null, parentElement: null }
+      : null
   };
 }
 async function flush() {
@@ -105,11 +110,41 @@ const incomplete = await observe([
   message("invalid", "assistant")
 ]);
 assert.equal(incomplete.skipped, 1);
+assert.equal(incomplete.missingId, 1);
+assert.equal(incomplete.missingRole, 0);
 assert.equal(incomplete.truncated, 1);
 assert.equal(incomplete.messages[0].body.length, 8192);
 location.pathname = `/c/${conversation}`;
 projectHref = `/g/${project}/project`;
 const breadcrumb = await observe([message(editedUser, "user", "Otro texto ficticio")]);
 assert.equal(breadcrumb.projectId, project);
-assert.equal(sent.length, 6);
+const structural = await observe([
+  message(editedUser, null, "Otro texto ficticio", "group/user-message"),
+  message(regeneratedAssistant, null, "Respuesta ficticia", "group/assistant-message")
+]);
+assert.deepEqual(Array.from(structural.messages, item => item.role), ["user", "assistant"]);
+const inferred = await observe([
+  message(editedUser, null, "Otro texto ficticio", "group/user-message"),
+  message(regeneratedAssistant, null, "Respuesta ficticia")
+]);
+assert.deepEqual(Array.from(inferred.messages, item => item.role), ["user", "assistant"]);
+assert.equal(inferred.inferredAssistant, 1);
+const unknown = await observe([
+  message(user, null), message(user, null), message(assistant, null),
+  message(continuationUser, null), message(continuationAssistant, null)
+]);
+assert.deepEqual(Array.from(unknown.messages, item => item.role),
+  ["unknown", "unknown", "unknown", "unknown"]);
+assert.equal(unknown.missingRole, 4);
+assert.equal(sent.length, 9);
+assert.match(panel.textContent, /acumulado \+/);
+assert.match(panel.textContent, /proyecto sí/);
+const hidden = await observe([
+  message(user, "user", "Viejo mensaje", "", false),
+  message(assistant, "assistant", "Vieja respuesta", "", false),
+  message(continuationUser, "user"), message(continuationAssistant, "assistant")
+]);
+assert.equal(hidden.hiddenDom, 2);
+assert.deepEqual(Array.from(hidden.messages, item => item.id),
+  [continuationUser, continuationAssistant]);
 process.stdout.write("Extension DOM fixture: project route/breadcrumb, continuation, edit, regenerate, partial capture OK\n");

@@ -52,10 +52,16 @@ try {
   const edit = await send(observation(3, [editedId, assistantId]));
   assert.deepEqual([edit.added, edit.noLongerVisible], [1, 1]);
   const regenerate = await send(observation(4, [editedId, regeneratedId],
-    "25a978a6-c58a-4b63-9b86-ae93331677e9"));
+    "g-p-25a978a6c58a4b639b86ae93331677e9"));
   assert.deepEqual([regenerate.added, regenerate.noLongerVisible], [1, 1]);
   assert.equal(regenerate.projectObserved, true);
   assert.equal(JSON.stringify(regenerate).includes("árbol"), false);
+  const unknown = observation(5, [editedId, regeneratedId]);
+  unknown.messages[0].role = "unknown";
+  unknown.messages[1].role = "unknown";
+  const unknownReply = await send(unknown);
+  assert.equal(unknownReply.ok, true);
+  assert.deepEqual([unknownReply.added, unknownReply.noLongerVisible], [0, 0]);
   process.stdout.write("Native Messaging smoke: ping, retry, edit, regenerate, project OK\n");
 } finally {
   child.stdin.end();

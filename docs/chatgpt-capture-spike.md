@@ -1,6 +1,6 @@
 # Prueba exploratoria de captura de ChatGPT
 
-Fecha: 29 de septiembre de 2026. Entorno: ChatGPT web en Chrome con sesión iniciada. Se crearon únicamente un proyecto y dos conversaciones **ficticios**, que se eliminaron al terminar. No se abrieron conversaciones personales ni se guardó contenido real en el repositorio.
+Fecha: 29 de septiembre de 2026. Entorno: ChatGPT web en Chrome con sesión iniciada. Todas las observaciones se hicieron con conversaciones, proyecto y adjunto **ficticios**. La exploración inicial usó un proyecto y dos conversaciones que se eliminaron al terminar; la prueba posterior de la extensión usó nuevos datos ficticios. No se abrieron conversaciones personales para la prueba ni se guardó contenido de ChatGPT en el repositorio.
 
 ## Qué se observó
 
@@ -16,35 +16,40 @@ Fecha: 29 de septiembre de 2026. Entorno: ChatGPT web en Chrome con sesión inic
 
 Los nodos de respuesta observados repetían el mismo UUID dos veces, separado por un espacio, en `data-chatgpt-search-message-ids`. Por tanto, ese atributo necesita normalización y validación; no se puede usar literalmente como una clave única. `data-chatgpt-search-unit-key` contenía claves posicionales `fallback-turn-...`; su nombre y su valor indican una clave de presentación, no una identidad duradera. Los selectores y atributos son detalles internos de la página, **sin contrato de estabilidad**.
 
-## Cobertura y límites
-
-Esta fue una prueba de lectura del DOM de la página mediante el navegador de desarrollo. **Todavía no se ha instalado ni verificado la extensión de Personal Context Home en Chrome.** El host Native Messaging sí se ha verificado como proceso independiente con lotes ficticios; falta comprobar el enlace con Chrome. Tampoco se probaron reinicio completo de Chrome, chats largos con mensajes fuera de pantalla, adjuntos, cambios de proyecto de un chat existente, versiones antiguas navegadas desde la interfaz, otras cuentas, ChatGPT de escritorio o móvil. La prueba no demuestra que el sistema pueda capturar actividad ocurrida mientras Chrome está cerrado.
-
-El núcleo SQLite actual puede guardar mensajes nuevos por `source_key`, pero carece de conceptos de *rama activa*, *versión alternativa* y *cobertura parcial*. Con la edición y regeneración observadas, ingerir directamente solo la rama visible dejaría mensajes antiguos aparentemente vigentes y podría producir recuerdos contradictorios. **No conectar el adaptador real a datos personales hasta resolver ese modelo y medir los casos restantes.**
-
-## Siguiente experimento mínimo
-
-1. Completar en Chrome la prueba de la extensión manual limitada a `chatgpt.com`, que observa el DOM renderizado sin cookies, almacenamiento de sesión ni API interna.
-2. Comprobar el enlace real extensión–host, la confirmación, el reintento y el reinicio del navegador. El protocolo local con lotes sintéticos ya pasó una prueba independiente.
-3. Repetir edición, regeneración y cambio de rama; registrar qué versiones son visibles y cómo representar actividad y cobertura sin inventar datos.
-4. Probar un chat largo y uno con adjuntos, y definir un estado de salud comprensible cuando la captura sea parcial o falle.
-5. Evaluar el flujo real de instalación de extensión y host para alguien sin conocimientos técnicos antes de comprometer la arquitectura final.
-
-**Conclusión provisional:** hay señales útiles para chats activos en esta versión web, pero la captura completa y mantenible sigue sin estar demostrada. La hipótesis MV3 + Native Messaging continúa como experimento, no como promesa de producto.
-
 ## Prototipo de extensión y puente local
 
-La extensión de `providers/chatgpt/extension/` usa Manifest V3, `activeTab`, `scripting` y `nativeMessaging`. Solo se inyecta tras pulsar su botón en una pestaña de `https://chatgpt.com`; un segundo clic la detiene. Un `MutationObserver` y una comprobación de ruta observan el chat activo. El script intenta extraer un UUID único de `data-chatgpt-search-message-ids`, rol y texto de cada mensaje visible, además del ID de proyecto cuando figura en la ruta o breadcrumb. Descarta atributos ambiguos, informa cuántos nodos omitió y trunca texto largo. Esos selectores son detalles internos de ChatGPT y aún **no se han validado desde la extensión**.
+La extensión de `providers/chatgpt/extension/` usa Manifest V3, `activeTab`, `scripting` y `nativeMessaging`. Se inyecta al pulsar su botón en una pestaña de `https://chatgpt.com`; otro clic la detiene. Un `MutationObserver` y una comprobación de ruta observan el chat activo. El script toma IDs de `data-chatgpt-search-message-ids`, intenta determinar el rol y envía texto de los mensajes visibles al host. Limita el texto a 8192 caracteres por mensaje y marca la cobertura como `visible_dom_only`. Detecta un proyecto de la ruta `/g/g-p-<32 hexadecimales>-.../c/...` o del enlace al proyecto. Filtra nodos ocultos que ChatGPT puede conservar al cambiar de chat dentro de la misma pestaña. Todos estos selectores son detalles internos sin garantía de estabilidad.
 
-`PersonalContext.NativeHost` lee tramas JSON de longitud prefijada en stdin y escribe una respuesta en stdout. Valida UUID, rol, orden, duplicados y tamaño. En memoria compara los IDs visibles por conversación y confirma `visible`, `added` y `noLongerVisible`. No devuelve texto ni IDs, no escribe archivos y no toca SQLite. `noLongerVisible` significa solo ausencia en la observación actual: **no implica borrado**. Reiniciar el proceso borra la comparación previa; los contadores de la primera observación vuelven a empezar.
+`PersonalContext.NativeHost` recibe tramas JSON de longitud prefijada, valida tamaño, IDs de conversación y mensaje, rol y orden, y comprueba el formato del proyecto para indicarlo en la respuesta. Compara en memoria conjuntos de IDs por conversación. Devuelve solo cantidades de mensajes visibles, nuevos y ya no visibles, y si observó proyecto. **Descarta el texto, mantiene los IDs solo en memoria y no escribe archivos ni SQLite.** Acepta `unknown` cuando el DOM no permite determinar el rol. `noLongerVisible` significa ausencia en la observación actual, nunca borrado. El host pierde su estado al terminar su proceso.
+
+El usuario cargó manualmente la extensión desempaquetada en Chrome y el script `scripts/register-probe-host.ps1` registró el host en HKCU para ese ID local. Se comprobó el intercambio real extensión–host: el recuadro de la página recibió respuestas del host al observar chats ficticios. La automatización del navegador quedó bloqueada por la revisión automática de acceso a `chrome://extensions/` y a ChatGPT; el usuario hizo los pasos de Chrome y comunicó los contadores. Esa revisión no se eludió.
+
+## Resultado y límites de la prueba real
+
+| Caso | Evidencia comunicada desde el recuadro PCH | Límite |
+| --- | --- | --- |
+| Chat ficticio y continuación | Tras adaptar el observador al DOM actual, contó 2 mensajes y después 6 al añadir continuaciones. Detectó los IDs nuevos en observaciones sucesivas. | El DOM no expuso roles fiables: los 6 quedaron como `unknown`. |
+| Edición | Con 6 visibles, el acumulado pasó de `+6/-0` a `+8/-2` tras editar una pregunta y esperar la respuesta. | Los IDs retirados pueden seguir en otra versión; el contador no indica borrado. |
+| Regeneración | Con 6 visibles, el acumulado pasó a `+9/-3` tras regenerar una respuesta. | No se comprobó la recuperación de la respuesta anterior. |
+| Recarga de página | En la misma sesión del host, 6 visibles dieron `+0/-0` tras recargar. | Solo demuestra estabilidad de esos IDs durante esta prueba. |
+| Reinicio de Chrome | Tras cerrar Chrome y abrir de nuevo el chat ficticio con adjunto, el host contó 4 visibles, `+4/-0`, `proyecto sí` y 0 nodos ocultos. | El primer `+4` es un nuevo punto de partida en memoria; no demuestra que se capturase actividad mientras Chrome estuvo cerrado. |
+| Proyecto | Tras mover el chat ficticio a un proyecto, la ruta incluyó `g-p-` más 32 caracteres hexadecimales. Con el analizador corregido, el host confirmó `proyecto sí`. Un chat nuevo del proyecto también se asoció. | No se conoce el comportamiento en otros formatos o cuentas. |
+| Navegación entre chats del proyecto | Chat nuevo: 2 visibles; chat anterior: 6 visibles y 2 nodos ocultos; vuelta al nuevo: 2 visibles y 6 nodos ocultos, sin recargar. | Hubo un falso recuento de 8 antes de filtrar el DOM oculto. Las transiciones aún pueden alterar los acumulados. |
+| Adjunto ficticio | Tras enviar un archivo de texto ficticio y recibir respuesta, el chat nuevo mostró 4 mensajes visibles y `proyecto sí`. | Solo se probaron IDs de los mensajes; el prototipo no extrae ni verifica contenido o metadatos del adjunto. El acumulado `+12/-2` mostró cambios transitorios, por lo que no es una medida fiable de actividad. |
+| Versiones antiguas | La interfaz ofrecía «Branch in a new chat» o «Return to current version»; no se cambió de versión en el mismo chat. | Navegación de ramas y restauración sin crear otro chat, sin verificar. |
+
+El recuadro llegó a mostrar `0 sin ID`, `6 rol desconocido` y `0 truncados` en el chat de seis mensajes. Por tanto, **identificar mensajes visibles funciona en estos casos, pero identificar quién habló no**. No se debe asignar automáticamente el rol de los mensajes desconocidos ni guardar estos lotes como conversaciones personales. Los contadores acumulados suman diferencias entre observaciones y pueden incluir estados intermedios de la interfaz; no representan un historial fiable.
+
+No se verificaron chats largos con mensajes fuera de pantalla, todas las ramas históricas, recuperación tras fallo de entrega, otros formatos de adjuntos, otras cuentas ni actividad mientras Chrome está cerrado. El reinicio completo sí se probó, con una nueva observación inicial. La extensión requiere activación manual en cada pestaña; no satisface aún el objetivo de captura automática. La instalación mediante extensión desempaquetada, registro manual del host y comandos de desarrollo tampoco satisface el objetivo de configuración para usuarios finales. ChatGPT de escritorio y móvil quedan fuera de esta prueba.
+
+El núcleo SQLite puede guardar mensajes por `source_key`, pero aún no representa *rama activa*, *versión alternativa* o *cobertura parcial*. Ingerir solo la rama visible podría dejar mensajes antiguos aparentemente vigentes y producir recuerdos contradictorios. **La puerta para conectar el adaptador a datos personales sigue cerrada** hasta resolver roles, ramas y cobertura verificable. MV3 + Native Messaging queda validado como transporte local de prueba, no como captura completa.
+
+## Comprobaciones locales
 
 | Verificación del 29-09-2026 | Resultado |
 | --- | --- |
-| Compilación del host y suite .NET | Correcta: 11 pruebas, 0 fallos. |
-| Sintaxis de ambos scripts MV3 | Correcta con `node --check`. |
-| Host autocontenido por protocolo binario real | Correcto: ping, entrega idéntica, cambio de ID por edición, cambio de ID por regeneración y proyecto ficticio. |
-| Observador contra DOM ficticio | Correcto: proyecto por ruta y breadcrumb, continuación, edición, regeneración, ID ambiguo omitido y texto largo truncado. No demuestra compatibilidad con el DOM actual de ChatGPT. |
-| Extensión cargada y lote real desde ChatGPT | **Pendiente.** El control de Chrome bloqueó `chrome://extensions/`; no se intentó otra vía de instalación. |
-| Nueva prueba web en la cuenta conectada | **Pendiente.** La revisión automática impidió abrir la portada de ChatGPT porque podría mostrar conversaciones personales. El usuario compartió una URL concreta de chat ficticio, pero la revisión también bloqueó el acceso por tratarlo como acceso al origen general. No se abrió el chat. |
+| Suite .NET | 11 pruebas correctas. |
+| Host autocontenido mediante protocolo Native Messaging | Ping, entrega idéntica, cambio de ID, proyecto ficticio y rol `unknown` correctos. |
+| Observador contra DOM ficticio | Continuación, edición, regeneración, proyecto por ruta y breadcrumb, ID ambiguo, texto truncado y nodos ocultos correctos. |
 
-El script `scripts/register-probe-host.ps1` crea el manifiesto local y la clave HKCU para un ID de extensión concreto, una vez disponible. No se ejecutó ni se registró un host en esta prueba. El ejecutable autocontenido de desarrollo queda bajo `.tools/`, excluido de Git. La prueba no valida persistencia, recuperación tras cierre, identidad de ramas ocultas ni extracción completa de contenido.
+El ejecutable autocontenido de desarrollo y el archivo de adjunto ficticio se guardaron bajo `.tools/`, excluido de Git. No se incluye en el repositorio el ID de extensión local, URLs de chats de prueba ni contenido de conversaciones.

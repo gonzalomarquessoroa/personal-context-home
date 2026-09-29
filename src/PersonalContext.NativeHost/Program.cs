@@ -88,7 +88,7 @@ public sealed class ProbeHost
                 var role = message.GetProperty("role").GetString();
                 var body = message.GetProperty("body").GetString();
                 if (!Guid.TryParse(id, out _) || !current.Add(id) ||
-                    role is not ("user" or "assistant") ||
+                    role is not ("user" or "assistant" or "unknown") ||
                     message.GetProperty("ordinal").GetInt32() != ordinal++ ||
                     body is null || body.Length > 8192)
                     return Error("invalid_message", sequence);
@@ -102,7 +102,9 @@ public sealed class ProbeHost
             return new
             {
                 ok = true, sequence, visible = current.Count, added, noLongerVisible,
-                projectObserved = Guid.TryParse(projectId, out _),
+                projectObserved = Guid.TryParse(projectId, out _) ||
+                    (projectId is not null && System.Text.RegularExpressions.Regex.IsMatch(
+                        projectId, "^g-p-[0-9a-f]{32}$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)),
                 coverage = "visible_dom_only"
             };
         }
