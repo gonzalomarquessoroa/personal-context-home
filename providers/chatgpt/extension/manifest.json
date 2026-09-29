@@ -1,0 +1,9 @@
+{
+  "manifest_version": 3,
+  "name": "Personal Context Home · captura de prueba",
+  "version": "0.1.0",
+  "description": "Prueba manual del DOM visible de un chat ficticio. No guarda contenido.",
+  "permissions": ["activeTab", "scripting", "nativeMessaging"],
+  "background": { "service_worker": "service-worker.js" },
+  "action": { "default_title": "Iniciar o detener prueba en esta pestaña" }
+}

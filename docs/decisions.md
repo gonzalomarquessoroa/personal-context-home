@@ -33,3 +33,7 @@ El código se publicará en GitHub sin conversaciones, bases de datos, importaci
 ## D-007 · Las versiones de ChatGPT requieren identidad de rama (provisional)
 
 La [prueba exploratoria](chatgpt-capture-spike.md) observó que editar un mensaje o regenerar una respuesta crea un identificador nuevo y retira la versión anterior de la rama visible. El contrato actual de `MessageObservation` sirve para la ingestión idempotente de mensajes conocidos, pero no basta para declarar cuál está activo ni para distinguir una rama oculta de un borrado. No se conectará a datos personales hasta añadir una representación verificable de rama y cobertura. No se usará la posición visual como identidad duradera ni se inferirá borrado a partir de ausencia en el DOM.
+
+## D-008 · Prototipo manual y efímero para medir cobertura
+
+La extensión de Fase 1 se activa con un clic en una pestaña concreta; `activeTab` evita acceso permanente a todo el historial. El host valida lotes y compara conjuntos de IDs visibles **solo en memoria del proceso**, devolviendo contadores sin texto ni IDs. Es una herramienta de viabilidad, no el adaptador de producción. Esta decisión permite ensayar el flujo Native Messaging sin llenar SQLite de ramas cuya vigencia se desconoce. Solo se mantendrá este enfoque si la prueba real de Chrome confirma señales suficientes y errores comprensibles.

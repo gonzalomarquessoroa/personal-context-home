@@ -20,6 +20,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\PersonalContext.Core\PersonalContext.Core.csproj" />
     <ProjectReference Include="..\..\src\PersonalContext.Storage\PersonalContext.Storage.csproj" />
+    <ProjectReference Include="..\..\src\PersonalContext.NativeHost\PersonalContext.NativeHost.csproj" />
   </ItemGroup>
 
 </Project>

@@ -4,9 +4,9 @@ Memoria personal local y reutilizable a partir de conversaciones con asistentes 
 
 ## Estado
 
-**Fase 1 en curso: núcleo local implementado y probado; todavía no hay aplicación de escritorio ni captura de ChatGPT.** La propuesta de captura necesita una prueba real antes de prometer sincronización automática fiable. La [arquitectura](docs/architecture.md) distingue el estado actual del diseño previsto.
+**Fase 1 en curso: núcleo local implementado y probado; existen una extensión y un host de prueba, todavía sin captura verificada en Chrome ni aplicación de escritorio.** La propuesta de captura necesita una prueba real antes de prometer sincronización automática fiable. La [arquitectura](docs/architecture.md) distingue el estado actual del diseño previsto.
 
-Una [prueba exploratoria de ChatGPT en Chrome](docs/chatgpt-capture-spike.md) comprobó chats y proyectos ficticios. Encontró que editar o regenerar crea nuevas versiones con IDs distintos; aún no se ha probado una extensión ni una sincronización completa.
+Una [prueba exploratoria de ChatGPT en Chrome](docs/chatgpt-capture-spike.md) comprobó chats y proyectos ficticios. Encontró que editar o regenerar crea nuevas versiones con IDs distintos. El nuevo puente y el observador pasaron pruebas locales con datos sintéticos, pero falta cargar la extensión en Chrome y comprobar su extracción en chats ficticios reales.
 
 ## Decisión técnica inicial
 
@@ -28,7 +28,7 @@ La documentación de la API de OpenAI describe conversaciones creadas y gestiona
 
 ## Próximo paso
 
-Realizar una prueba corta con la extensión y el puente local para validar la cobertura real de la captura, antes de construir el adaptador de ChatGPT.
+Completar la [prueba guiada de la extensión y el puente](docs/chatgpt-capture-spike.md#prototipo-de-extensión-y-puente-local) con chats ficticios antes de construir el adaptador de ChatGPT.
 
 ## Desarrollo
 
@@ -40,6 +40,16 @@ dotnet test PersonalContext.sln --no-restore
 ```
 
 El SDK también puede instalarse de forma local en `.tools/dotnet`, carpeta excluida de Git. Las pruebas usan bases temporales y no requieren cuenta de OpenAI.
+
+El host de prueba se publica con runtime incluido y se comprueba con datos ficticios así:
+
+```powershell
+dotnet publish src/PersonalContext.NativeHost/PersonalContext.NativeHost.csproj -c Release -r win-x64 --self-contained true -o .tools/native-host/publish
+node scripts/probe-host-smoke.mjs
+node scripts/probe-extension-fixture.mjs
+```
+
+La extensión está en `providers/chatgpt/extension/`. Se activa manualmente desde el botón de Chrome solo en la pestaña elegida. El host de prueba no escribe conversaciones ni alimenta SQLite.
 
 ## Repositorio público y datos privados
 

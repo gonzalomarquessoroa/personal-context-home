@@ -9,7 +9,7 @@ Orden sugerido para cambios pequeños y completos:
 3. **Hecho: contrato de observación.** DTO normalizado independiente de ChatGPT y validación de tamaño, rol, claves e identificador de conversación. Los datos sintéticos de las pruebas sirven como origen local; aún sin extensión.
 4. **Hecho: ingestión transaccional.** El mismo lote no duplica contenido; añadir 10 mensajes después de 120 añade solo 10. Los cambios de contenido, rol u orden guardan una revisión. Un lote inválido no escribe mensajes parciales.
 5. **Hecho: consultas mínimas de diagnóstico.** Lectura de conversaciones, mensajes y última captura/error desde el núcleo. La utilidad de desarrollo queda opcional.
-6. **En curso: prueba de viabilidad de ChatGPT antes del adaptador completo.** La [exploración del DOM con datos ficticios](chatgpt-capture-spike.md) comprobó chat nuevo, recarga, continuación, edición, regeneración, título y proyecto. Falta extensión local temporal + host que acepte un lote de ejemplo, además de reinicio de Chrome, chats largos, versiones y ruta viable de instalación para una persona no técnica. Esta prueba decide el diseño de Fase 3.
+6. **En curso: prueba de viabilidad de ChatGPT antes del adaptador completo.** La [exploración del DOM con datos ficticios](chatgpt-capture-spike.md) comprobó chat nuevo, recarga, continuación, edición, regeneración, título y proyecto. Ya existen una extensión MV3 manual y un host mínimo que aceptó lotes sintéticos por el protocolo Native Messaging; su enlace real con Chrome sigue pendiente. Faltan además reinicio de Chrome, chats largos, adjuntos, navegación de versiones y una ruta viable de instalación para una persona no técnica. Esta prueba decide el diseño de Fase 3.
 
 ## Criterios de aceptación de Fase 1
 
