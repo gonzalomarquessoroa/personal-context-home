@@ -6,6 +6,8 @@ Memoria personal local y reutilizable a partir de conversaciones con asistentes 
 
 **Fase 1 en curso: núcleo local implementado y probado; todavía no hay aplicación de escritorio ni captura de ChatGPT.** La propuesta de captura necesita una prueba real antes de prometer sincronización automática fiable. La [arquitectura](docs/architecture.md) distingue el estado actual del diseño previsto.
 
+Una [prueba exploratoria de ChatGPT en Chrome](docs/chatgpt-capture-spike.md) comprobó chats y proyectos ficticios. Encontró que editar o regenerar crea nuevas versiones con IDs distintos; aún no se ha probado una extensión ni una sincronización completa.
+
 ## Decisión técnica inicial
 
 - Aplicación Windows en C# con .NET 10 y WPF; lógica y almacenamiento separados de la interfaz.

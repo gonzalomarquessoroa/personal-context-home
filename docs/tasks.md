@@ -9,7 +9,7 @@ Orden sugerido para cambios pequeños y completos:
 3. **Hecho: contrato de observación.** DTO normalizado independiente de ChatGPT y validación de tamaño, rol, claves e identificador de conversación. Los datos sintéticos de las pruebas sirven como origen local; aún sin extensión.
 4. **Hecho: ingestión transaccional.** El mismo lote no duplica contenido; añadir 10 mensajes después de 120 añade solo 10. Los cambios de contenido, rol u orden guardan una revisión. Un lote inválido no escribe mensajes parciales.
 5. **Hecho: consultas mínimas de diagnóstico.** Lectura de conversaciones, mensajes y última captura/error desde el núcleo. La utilidad de desarrollo queda opcional.
-6. **Siguiente: prueba de viabilidad de ChatGPT antes del adaptador completo.** Extensión local temporal + host que acepte un lote de ejemplo; medir chat nuevo, continuación, ediciones, regeneración, proyecto y reinicio. Documentar IDs disponibles, contenido invisible, cambios de DOM y si existe una ruta viable de instalación de extensión para un usuario no técnico. Esta prueba decide el diseño de Fase 3 y requiere una sesión de ChatGPT en un navegador Chromium de pruebas.
+6. **En curso: prueba de viabilidad de ChatGPT antes del adaptador completo.** La [exploración del DOM con datos ficticios](chatgpt-capture-spike.md) comprobó chat nuevo, recarga, continuación, edición, regeneración, título y proyecto. Falta extensión local temporal + host que acepte un lote de ejemplo, además de reinicio de Chrome, chats largos, versiones y ruta viable de instalación para una persona no técnica. Esta prueba decide el diseño de Fase 3.
 
 ## Criterios de aceptación de Fase 1
 
@@ -24,6 +24,7 @@ Orden sugerido para cambios pequeños y completos:
 ## Riesgos a cerrar pronto
 
 1. **Cobertura real de ChatGPT:** el DOM puede cambiar, ocultar mensajes o no exponer IDs estables. Esta es la condición principal de viabilidad.
+   En la prueba inicial, las ediciones y regeneraciones crearon IDs nuevos y ocultaron las versiones anteriores en la rama principal. El modelo debe representar ramas y cobertura antes de captar datos reales.
 2. **Proyectos:** la asociación puede no estar presente o ser ambigua en la página. Se guardará solo cuando haya evidencia.
 3. **Instalación:** extensión y host deben enlazarse sin terminal; IDs de tienda y firma pueden complicar el flujo.
 4. **Privacidad:** la base inicial no tiene cifrado de aplicación; explicar protección real, exportación legible y borrado.

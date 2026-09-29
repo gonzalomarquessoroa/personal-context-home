@@ -29,3 +29,7 @@ Ingestión, deduplicación exacta, persistencia, búsqueda textual y exportació
 ## D-006 · Repositorio público, datos locales fuera de Git (decidido)
 
 El código se publicará en GitHub sin conversaciones, bases de datos, importaciones, exportaciones, SDK local ni secretos. `.gitignore` excluye estas rutas habituales, pero no sustituye la revisión de archivos y del historial antes del primer push. El autor de los commits locales usa la dirección privada `noreply` de GitHub. El primer commit se reescribió antes de crear un remoto para retirar el correo personal de la historia que se publicará. Véase [GitHub Docs: commit email](https://docs.github.com/en/account-and-profile/how-tos/email-preferences/setting-your-commit-email-address).
+
+## D-007 · Las versiones de ChatGPT requieren identidad de rama (provisional)
+
+La [prueba exploratoria](chatgpt-capture-spike.md) observó que editar un mensaje o regenerar una respuesta crea un identificador nuevo y retira la versión anterior de la rama visible. El contrato actual de `MessageObservation` sirve para la ingestión idempotente de mensajes conocidos, pero no basta para declarar cuál está activo ni para distinguir una rama oculta de un borrado. No se conectará a datos personales hasta añadir una representación verificable de rama y cobertura. No se usará la posición visual como identidad duradera ni se inferirá borrado a partir de ausencia en el DOM.

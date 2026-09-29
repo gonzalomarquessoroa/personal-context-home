@@ -4,6 +4,8 @@
 
 Existen `PersonalContext.Core`, `PersonalContext.Storage` y pruebas xUnit. El núcleo valida observaciones normalizadas y guarda proveedores, proyectos, conversaciones, mensajes, revisiones y estado de captura en SQLite. Usa `PRAGMA user_version = 1` para la primera migración, transacciones e índices de identidad. Las pruebas cubren reapertura, inicialización concurrente, reintentos idempotentes, 120 mensajes seguidos de 10 nuevos, revisiones, proyecto, lote inválido y estado de error. No existen todavía interfaz, extensión, host Native Messaging, importador ni instalador.
 
+La [prueba exploratoria del DOM de ChatGPT](chatgpt-capture-spike.md) detectó IDs de mensajes visibles y de proyecto, pero también versiones nuevas con IDs distintos tras editar o regenerar. Por ello el esquema actual **no representa aún la rama activa ni la cobertura de versiones ocultas**. Sigue siendo un núcleo probado con datos normalizados; todavía no es un capturador seguro de conversaciones reales.
+
 El diagrama siguiente representa los componentes previstos, no los ya implementados.
 
 ## Componentes previstos
