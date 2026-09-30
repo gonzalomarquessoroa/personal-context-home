@@ -35,11 +35,10 @@ const userId = "23349274-516a-447e-9d60-4396966d160f";
 const assistantId = "bd129339-a388-4c7b-9e66-6ca0548366cb";
 const editedId = "167264a3-c53b-456b-8863-bbfbead249e1";
 const regeneratedId = "634ec162-a137-4522-974d-f1b3a46d5b4c";
-const observation = (sequence, ids, projectId = null) => ({
-  kind: "observation", sequence, conversationId, projectId,
+const observation = (sequence, ids, projectId = null, tabId = 1) => ({
+  kind: "observation", sequence, tabId, conversationId, projectId,
   messages: ids.map((id, ordinal) => ({
-    id, role: ordinal % 2 ? "assistant" : "user", ordinal,
-    body: "Texto ficticio: árbol"
+    id, role: ordinal % 2 ? "assistant" : "user", ordinal
   }))
 });
 
@@ -55,14 +54,15 @@ try {
     "g-p-25a978a6c58a4b639b86ae93331677e9"));
   assert.deepEqual([regenerate.added, regenerate.noLongerVisible], [1, 1]);
   assert.equal(regenerate.projectObserved, true);
-  assert.equal(JSON.stringify(regenerate).includes("árbol"), false);
-  const unknown = observation(5, [editedId, regeneratedId]);
+  const secondTab = await send(observation(5, [userId, assistantId], null, 2));
+  assert.deepEqual([secondTab.added, secondTab.noLongerVisible], [2, 0]);
+  const unknown = observation(6, [editedId, regeneratedId]);
   unknown.messages[0].role = "unknown";
   unknown.messages[1].role = "unknown";
   const unknownReply = await send(unknown);
   assert.equal(unknownReply.ok, true);
   assert.deepEqual([unknownReply.added, unknownReply.noLongerVisible], [0, 0]);
-  process.stdout.write("Native Messaging smoke: ping, retry, edit, regenerate, project OK\n");
+  process.stdout.write("Native Messaging smoke: ping, retry, edit, regenerate, project, separate tabs OK\n");
 } finally {
   child.stdin.end();
 }

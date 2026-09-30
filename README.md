@@ -4,7 +4,7 @@ Memoria personal local y reutilizable a partir de conversaciones con asistentes 
 
 ## Estado
 
-**Fase 1 completada: núcleo local probado y enlace real Chrome–host verificado con chats ficticios.** La extensión experimental identifica mensajes visibles y proyectos, pero la mayoría de roles no se distinguen en el DOM actual. No existe todavía aplicación de escritorio ni captura apta para datos personales. La [arquitectura](docs/architecture.md) distingue el estado actual del diseño previsto.
+**Fase 1 completada: núcleo local probado y enlace real Chrome–host verificado con chats ficticios.** La extensión experimental identifica mensajes visibles y proyectos, pero la mayoría de roles no se distinguen en el DOM actual. El prototipo actual envía solo IDs y metadatos mínimos al host, sin texto de mensajes. No existe todavía aplicación de escritorio ni captura apta para datos personales. La [arquitectura](docs/architecture.md) distingue el estado actual del diseño previsto.
 
 La [prueba real de Chrome](docs/chatgpt-capture-spike.md) comprobó el puente y el observador con conversaciones ficticias: continuación, edición, regeneración, recarga, proyectos y navegación entre chats. Las ediciones y regeneraciones crean versiones con IDs distintos. La cobertura de ramas y mensajes fuera de pantalla sigue sin verificarse.
 
@@ -47,9 +47,10 @@ El host de prueba se publica con runtime incluido y se comprueba con datos ficti
 dotnet publish src/PersonalContext.NativeHost/PersonalContext.NativeHost.csproj -c Release -r win-x64 --self-contained true -o .tools/native-host/publish
 node scripts/probe-host-smoke.mjs
 node scripts/probe-extension-fixture.mjs
+node scripts/probe-worker-fixture.mjs
 ```
 
-La extensión está en `providers/chatgpt/extension/`. Se activa manualmente desde el botón de Chrome solo en la pestaña elegida. El host de prueba no escribe conversaciones ni alimenta SQLite.
+La extensión está en `providers/chatgpt/extension/`. Se activa manualmente desde el botón de Chrome solo en la pestaña elegida. El host de prueba no recibe texto, no escribe conversaciones ni alimenta SQLite. Las pruebas locales posteriores al ensayo real usan exclusivamente DOM y datos ficticios; los cambios más recientes aún no se han vuelto a comprobar en Chrome.
 
 ## Repositorio público y datos privados
 

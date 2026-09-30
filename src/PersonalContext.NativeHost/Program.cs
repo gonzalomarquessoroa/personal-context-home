@@ -58,7 +58,7 @@ public static class NativeFrames
 
 public sealed class ProbeHost
 {
-    private readonly Dictionary<string, HashSet<string>> _visibleByConversation = new(StringComparer.Ordinal);
+    private readonly Dictionary<(int TabId, string ConversationId), HashSet<string>> _visibleByView = [];
 
     public object Handle(byte[] request)
     {
@@ -74,8 +74,10 @@ public sealed class ProbeHost
         try
         {
             var sequence = root.GetProperty("sequence").GetInt32();
+            var tabId = root.GetProperty("tabId").GetInt32();
             var conversationId = root.GetProperty("conversationId").GetString() ?? "";
-            if (!Guid.TryParse(conversationId, out _)) return Error("invalid_conversation_id", sequence);
+            if (tabId <= 0 || !Guid.TryParse(conversationId, out _))
+                return Error("invalid_view", sequence);
             var messages = root.GetProperty("messages");
             if (messages.ValueKind != JsonValueKind.Array || messages.GetArrayLength() > 500)
                 return Error("invalid_messages", sequence);
@@ -86,25 +88,26 @@ public sealed class ProbeHost
             {
                 var id = message.GetProperty("id").GetString() ?? "";
                 var role = message.GetProperty("role").GetString();
-                var body = message.GetProperty("body").GetString();
                 if (!Guid.TryParse(id, out _) || !current.Add(id) ||
                     role is not ("user" or "assistant" or "unknown") ||
                     message.GetProperty("ordinal").GetInt32() != ordinal++ ||
-                    body is null || body.Length > 8192)
+                    message.TryGetProperty("body", out _))
                     return Error("invalid_message", sequence);
             }
 
-            var prior = _visibleByConversation.GetValueOrDefault(conversationId) ?? [];
+            var projectId = root.TryGetProperty("projectId", out var project) ? project.GetString() : null;
+            var projectObserved = Guid.TryParse(projectId, out _) ||
+                (projectId is not null && System.Text.RegularExpressions.Regex.IsMatch(
+                    projectId, "^g-p-[0-9a-f]{32}$", System.Text.RegularExpressions.RegexOptions.IgnoreCase));
+            var view = (tabId, conversationId);
+            var prior = _visibleByView.GetValueOrDefault(view) ?? [];
             var added = current.Except(prior).Count();
             var noLongerVisible = prior.Except(current).Count();
-            _visibleByConversation[conversationId] = current;
-            var projectId = root.TryGetProperty("projectId", out var project) ? project.GetString() : null;
+            _visibleByView[view] = current;
             return new
             {
                 ok = true, sequence, visible = current.Count, added, noLongerVisible,
-                projectObserved = Guid.TryParse(projectId, out _) ||
-                    (projectId is not null && System.Text.RegularExpressions.Regex.IsMatch(
-                        projectId, "^g-p-[0-9a-f]{32}$", System.Text.RegularExpressions.RegexOptions.IgnoreCase)),
+                projectObserved,
                 coverage = "visible_dom_only"
             };
         }

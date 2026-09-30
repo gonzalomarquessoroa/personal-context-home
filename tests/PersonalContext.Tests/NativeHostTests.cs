@@ -50,23 +50,45 @@ public sealed class NativeHostTests
         Reply(host, [User1]);
         var invalid = JsonSerializer.SerializeToUtf8Bytes(new
         {
-            kind = "observation", sequence = 2, conversationId = Conversation,
-            messages = new[] { new { id = "bad", role = "user", ordinal = 0, body = "ficticio" } }
+            kind = "observation", sequence = 2, tabId = 1, conversationId = Conversation,
+            messages = new[] { new { id = "bad", role = "user", ordinal = 0 } }
         });
         Assert.False(JsonSerializer.SerializeToElement(host.Handle(invalid)).GetProperty("ok").GetBoolean());
+        var invalidProject = JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            kind = "observation", sequence = 3, tabId = 1, conversationId = Conversation,
+            projectId = 42,
+            messages = new[] { new { id = Assistant1, role = "assistant", ordinal = 0 } }
+        });
+        Assert.False(JsonSerializer.SerializeToElement(host.Handle(invalidProject)).GetProperty("ok").GetBoolean());
         var next = Reply(host, [User1, Assistant1]);
         Assert.Equal(1, next.GetProperty("added").GetInt32());
     }
 
-    private static JsonElement Reply(ProbeHost host, string[] ids)
+    [Fact]
+    public void TabsHaveSeparateVisibleBaselinesAndTextIsRejected()
+    {
+        var host = new ProbeHost();
+        Assert.Equal(2, Reply(host, [User1, Assistant1], 1).GetProperty("added").GetInt32());
+        Assert.Equal(2, Reply(host, [UserEdited, AssistantRegenerated], 2).GetProperty("added").GetInt32());
+        Assert.Equal(0, Reply(host, [User1, Assistant1], 1).GetProperty("noLongerVisible").GetInt32());
+
+        var withText = JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            kind = "observation", sequence = 3, tabId = 1, conversationId = Conversation,
+            messages = new[] { new { id = User1, role = "user", ordinal = 0, body = "ficticio" } }
+        });
+        Assert.False(JsonSerializer.SerializeToElement(host.Handle(withText)).GetProperty("ok").GetBoolean());
+    }
+
+    private static JsonElement Reply(ProbeHost host, string[] ids, int tabId = 1)
     {
         var request = JsonSerializer.SerializeToUtf8Bytes(new
         {
-            kind = "observation", sequence = 1, conversationId = Conversation,
+            kind = "observation", sequence = 1, tabId, conversationId = Conversation,
             messages = ids.Select((id, ordinal) => new
             {
-                id, role = ordinal % 2 == 0 ? "user" : "assistant", ordinal,
-                body = "Texto ficticio"
+                id, role = ordinal % 2 == 0 ? "user" : "assistant", ordinal
             }).ToArray()
         });
         return JsonSerializer.SerializeToElement(host.Handle(request));

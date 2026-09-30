@@ -14,8 +14,6 @@
   let lastPath = location.pathname;
   let timer;
   let busy = false;
-  let totalAdded = 0;
-  let totalNoLongerVisible = 0;
 
   function structuralRole(element) {
     for (let node = element; node; node = node.parentElement) {
@@ -55,7 +53,6 @@
     let missingRole = 0;
     let truncated = 0;
     let hiddenDom = 0;
-    let inferredAssistant = 0;
     const seen = new Set();
     for (const element of document.querySelectorAll("[data-chatgpt-search-message-ids]")) {
       if (!isRendered(element)) { hiddenDom++; continue; }
@@ -71,24 +68,19 @@
       let role = element.closest('[data-message-author-role]')?.getAttribute("data-message-author-role") ||
         element.querySelector('[data-message-author-role]')?.getAttribute("data-message-author-role") ||
         structuralRole(element);
-      if (!role && messages.at(-1)?.role === "user") {
-        role = "assistant";
-        inferredAssistant++;
-      }
       if (!["user", "assistant"].includes(role)) {
         role = "unknown";
         missingRole++;
       }
       seen.add(id);
-      const fullBody = (element.innerText || element.textContent || "").trim();
-      if (fullBody.length > 8192) truncated++;
-      const body = fullBody.slice(0, 8192);
-      messages.push({ id, role, ordinal: messages.length, body });
+      const textLength = (element.innerText || element.textContent || "").trim().length;
+      if (textLength > 8192) truncated++;
+      messages.push({ id, role, ordinal: messages.length });
       if (messages.length >= 500) { skipped++; break; }
     }
     return {
       kind: "observation", conversationId, projectId,
-      messages, skipped, missingId, missingRole, inferredAssistant, truncated, hiddenDom,
+      messages, skipped, missingId, missingRole, truncated, hiddenDom,
       coverage: "visible_dom_only"
     };
   }
@@ -105,9 +97,7 @@
       const reply = await chrome.runtime.sendMessage(batch);
       if (!reply?.ok) throw new Error(reply?.code || "sin confirmación");
       lastSignature = signature;
-      totalAdded += reply.added;
-      totalNoLongerVisible += reply.noLongerVisible;
-      panel.textContent = `PCH prueba: ${reply.visible} visibles · último +${reply.added}/-${reply.noLongerVisible} · acumulado +${totalAdded}/-${totalNoLongerVisible} · proyecto ${reply.projectObserved ? "sí" : "no"} · ${batch.hiddenDom} ocultos, ${batch.missingId} sin ID, ${batch.missingRole} rol desconocido, ${batch.inferredAssistant} rol inferido, ${batch.truncated} truncados`;
+      panel.textContent = `PCH prueba: ${reply.visible} visibles · cambio observado +${reply.added}/-${reply.noLongerVisible} · proyecto ${reply.projectObserved ? "sí" : "no"} · ${batch.hiddenDom} ocultos, ${batch.missingId} sin ID, ${batch.missingRole} rol desconocido, ${batch.truncated} largos`;
     } catch (error) {
       panel.textContent = `PCH prueba: error del puente (${String(error.message).slice(0, 80)})`;
       setTimeout(schedule, 3000);

@@ -83,6 +83,7 @@ await flush();
 assert.equal(sent.length, 1);
 assert.equal(sent[0].projectId, project);
 assert.deepEqual(Array.from(sent[0].messages, item => item.id), [user, assistant]);
+assert.equal(sent[0].messages.some(item => Object.hasOwn(item, "body")), false);
 
 const continuation = await observe([
   message(user, "user"), message(assistant, "assistant"),
@@ -113,7 +114,7 @@ assert.equal(incomplete.skipped, 1);
 assert.equal(incomplete.missingId, 1);
 assert.equal(incomplete.missingRole, 0);
 assert.equal(incomplete.truncated, 1);
-assert.equal(incomplete.messages[0].body.length, 8192);
+assert.equal(incomplete.messages[0].body, undefined);
 location.pathname = `/c/${conversation}`;
 projectHref = `/g/${project}/project`;
 const breadcrumb = await observe([message(editedUser, "user", "Otro texto ficticio")]);
@@ -123,12 +124,12 @@ const structural = await observe([
   message(regeneratedAssistant, null, "Respuesta ficticia", "group/assistant-message")
 ]);
 assert.deepEqual(Array.from(structural.messages, item => item.role), ["user", "assistant"]);
-const inferred = await observe([
+const noInference = await observe([
   message(editedUser, null, "Otro texto ficticio", "group/user-message"),
   message(regeneratedAssistant, null, "Respuesta ficticia")
 ]);
-assert.deepEqual(Array.from(inferred.messages, item => item.role), ["user", "assistant"]);
-assert.equal(inferred.inferredAssistant, 1);
+assert.deepEqual(Array.from(noInference.messages, item => item.role), ["user", "unknown"]);
+assert.equal(noInference.missingRole, 1);
 const unknown = await observe([
   message(user, null), message(user, null), message(assistant, null),
   message(continuationUser, null), message(continuationAssistant, null)
@@ -137,7 +138,7 @@ assert.deepEqual(Array.from(unknown.messages, item => item.role),
   ["unknown", "unknown", "unknown", "unknown"]);
 assert.equal(unknown.missingRole, 4);
 assert.equal(sent.length, 9);
-assert.match(panel.textContent, /acumulado \+/);
+assert.match(panel.textContent, /cambio observado \+/);
 assert.match(panel.textContent, /proyecto sí/);
 const hidden = await observe([
   message(user, "user", "Viejo mensaje", "", false),

@@ -39,15 +39,26 @@ chrome.action.onClicked.addListener(async (tab) => {
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
   if (message?.kind !== "observation" || !sender.tab?.id ||
       !sender.url?.startsWith("https://chatgpt.com/")) return;
-  if (new TextEncoder().encode(JSON.stringify(message)).length > 450_000) {
+  if (!Array.isArray(message.messages) || message.messages.length > 500) {
+    respond({ ok: false, code: "invalid_messages" });
+    return;
+  }
+  const outbound = {
+    kind: "observation",
+    sequence: ++nextSequence,
+    tabId: sender.tab.id,
+    conversationId: message.conversationId,
+    projectId: message.projectId,
+    messages: message.messages.map(({ id, role, ordinal }) => ({ id, role, ordinal }))
+  };
+  if (new TextEncoder().encode(JSON.stringify(outbound)).length > 450_000) {
     respond({ ok: false, code: "batch_too_large" });
     return;
   }
-  const sequence = ++nextSequence;
-  message.sequence = sequence;
+  const sequence = outbound.sequence;
   new Promise((resolve) => {
     pending.set(sequence, { resolve });
-    try { connect().postMessage(message); }
+    try { connect().postMessage(outbound); }
     catch (error) {
       pending.delete(sequence);
       resolve({ ok: false, sequence, code: String(error.message) });
