@@ -1,16 +1,24 @@
 # Arquitectura
 
-## Estado real durante la Fase 1
+## Estado real tras implementar Fase 2.1
 
-Existen `PersonalContext.Core`, `PersonalContext.Storage` y pruebas xUnit. El núcleo valida observaciones normalizadas y guarda proveedores, proyectos, conversaciones, mensajes, revisiones y estado de captura en SQLite. Usa `PRAGMA user_version = 1` para la primera migración, transacciones e índices de identidad. Las pruebas cubren reapertura, inicialización concurrente, reintentos idempotentes, 120 mensajes seguidos de 10 nuevos, revisiones, proyecto, lote inválido y estado de error. Existe una extensión MV3 y un host Native Messaging **experimentales** que no escriben en SQLite. No existen todavía interfaz, importador ni instalador.
+Existen `PersonalContext.Core`, `PersonalContext.Storage` y pruebas xUnit. El núcleo valida observaciones normalizadas y guarda proveedores, proyectos, conversaciones, mensajes, revisiones y estado de captura en SQLite. Usa `PRAGMA user_version = 1` para la primera migración, transacciones e índices de identidad. Las pruebas cubren reapertura, inicialización concurrente, reintentos idempotentes, 120 mensajes seguidos de 10 nuevos, revisiones, proyecto, lote inválido y estado de error. Existe una extensión MV3 y un host Native Messaging **experimentales** que no escriben en SQLite. Existe una interfaz WPF mínima de diagnóstico; no existen importador ni instalador.
 
 El prototipo usa `activeTab`: un clic inyecta el observador únicamente en la pestaña actual de `chatgpt.com`; otro clic lo detiene. El observador envía al host IDs, rol conocido o `unknown`, orden y proyecto, sin texto. El host compara IDs visibles por pestaña y conversación, y devuelve cantidades de IDs añadidos o ya no visibles. No hay archivo de captura ni llamada de red. El enlace real Chrome–host se verificó con chats ficticios, incluidos reinicio del navegador y proyectos; la reducción posterior del protocolo pasó pruebas locales y sigue pendiente de otra prueba real de Chrome. El DOM actual no ofreció roles fiables para los mensajes probados. La vista puede omitir ramas, mensajes fuera de pantalla y contenido de adjuntos; se cuenta localmente el texto visible que excede 8192 caracteres, pero no se envía. Por ello el prototipo no usa el contrato `ProviderObservation` ni actualiza la base.
 
 La [prueba real de Chrome](chatgpt-capture-spike.md) detectó IDs de mensajes visibles y de proyecto, pero también versiones nuevas con IDs distintos tras editar o regenerar, roles `unknown` y nodos ocultos conservados durante la navegación. El filtro de nodos ocultos funcionó al alternar dos chats ficticios; los contadores acumulados aún pueden incluir estados transitorios. El esquema actual **no representa la rama activa ni la cobertura de versiones ocultas**. Sigue siendo un núcleo probado con datos normalizados; todavía no es un capturador seguro de conversaciones reales.
 
-El diagrama siguiente representa los componentes previstos, no los ya implementados.
+## Desktop implementado · Fase 2.1
+
+`PersonalContext.Desktop` está añadido a la solución: WinExe, `net10.0-windows`, WPF y referencia a Storage. `MainWindow.Loaded` inicia una única consulta con `Task.Run`; `GetConversations()` inicializa LocalStore y devuelve las conversaciones cuyo número se muestra. El trabajo SQLite ocurre fuera del hilo de interfaz y la continuación actualiza los controles en ese hilo. No hay SQL ni reglas de ingestión en Desktop, ni cambios en Core, Storage o la migración 001.
+
+La ventana muestra estado de apertura, ruta seleccionable y contador. Si falla, conserva la ruta, marca el contador como no disponible y explica permisos, bloqueo, versión incompatible, archivo dañado o carga del paquete. No elimina ni reemplaza la base y no reintenta automáticamente. La captura de ChatGPT todavía no está conectada; el aviso aparece siempre.
+
+El paquete es una carpeta `win-x64` autocontenida, sin single-file ni trimming, en `.tools/desktop/publish-clean/`. El publish excluye los PDB y el comando aplica `PathMap` global a Desktop y sus referencias para sanear las rutas de depuración de las DLL; los símbolos de build se conservan. La anterior `.tools/desktop/publish/` no es distribuible. La base continúa en el perfil local de Windows. El usuario confirmó el smoke manual en una cuenta local estándar de prueba de Windows 11 Home 25H2, desde una ruta con espacios, con reapertura y contadores 0/2, error visible ante una fixture SQLite inválida y recuperación del contador 2 tras restaurar la fixture válida. Es una observación del usuario, separada de las comprobaciones automáticas; el [registro detallado](tasks.md#smoke-manual-de-fase-21--confirmación-del-usuario) recoge su alcance. Sigue pendiente la prueba en una máquina sin .NET instalado; Fase 2 no está completada.
 
 ## Componentes previstos
+
+El diagrama siguiente representa los componentes previstos, no los ya implementados.
 
 ```text
 ChatGPT en Chrome o Edge
@@ -85,7 +93,7 @@ docs/
 src/
   PersonalContext.Core/          # entidades, reglas e ingestión
   PersonalContext.Storage/       # SQLite y migraciones
-  PersonalContext.Desktop/       # WPF; se añade cuando haya flujo visible
+  PersonalContext.Desktop/       # WPF mínimo de diagnóstico de LocalStore
   PersonalContext.NativeHost/    # puente de la extensión
   providers/chatgpt/extension/   # MV3; después de la prueba de viabilidad
 installer/                       # receta de instalador

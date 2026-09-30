@@ -33,3 +33,60 @@ Orden sugerido para cambios pequeños y completos:
 ## Próxima puerta de viabilidad
 
 Antes de una captura personal o automática: identificar roles con evidencia, representar rama activa y versiones ocultas, medir chats largos y mensajes fuera de pantalla, mostrar cobertura y errores, y probar recuperación de entregas. El transporte local funciona; estas condiciones siguen pendientes.
+
+## Fase 2.1 · Desktop mínimo
+
+- [x] Añadir `PersonalContext.Desktop` a `PersonalContext.sln`: WPF, WinExe, .NET 10 Windows y referencia a Storage.
+- [x] Abrir LocalStore y contar conversaciones fuera del hilo de interfaz, tras cargar la ventana.
+- [x] Mostrar carga, estado, ruta, contador o error comprensible, sin borrar ni sustituir la base.
+- [x] Mostrar que la captura de ChatGPT todavía no está conectada; mantener el prototipo aislado y el esquema sin cambios.
+- [x] Documentar restore, test y publish con el SDK Windows desde Bash en WSL y conservar PowerShell.
+- [x] Smoke manual confirmado por el usuario en la cuenta local estándar de prueba `PCH-Smoke`: ventana sin consola y con respuesta normal, base bajo el perfil de prueba, contadores 0/2 y reapertura; detalle abajo, separado de las comprobaciones automáticas.
+- [x] Smoke manual confirmado por el usuario con `publish-clean` copiado a una ruta con espacios; fixture SQLite inválida con mensaje comprensible y contador «No disponible»; restauración válida con contador 2.
+- [ ] Verificar la carpeta completa en una máquina Windows x64 sin .NET instalado; esta condición no queda acreditada por el smoke confirmado.
+- [ ] Fase 2 posterior: instalador por usuario, registro automático del puente y prueba de instalación. **Fase 2 permanece pendiente.**
+
+## Comprobaciones automáticas locales de Fase 2.1 · 30 de septiembre de 2026
+
+SDK Windows 10.0.401 ejecutado desde Bash en WSL con `./.tools/dotnet/dotnet.exe`:
+
+- [x] Restore de `PersonalContext.sln` con `NuGet.Config`, código de salida 0.
+- [x] Build de Desktop en Release con `--no-restore`, sin errores ni advertencias.
+- [x] Pruebas existentes: 12 correctas, 0 fallidas y 0 omitidas; repetición autorizada con `--no-build --no-restore` tras no poder recuperar el resultado de la sesión interrumpida. Informe en `.tools/test-results/phase-2.1.trx`.
+- [x] Publish local `win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishTrimmed=false` en `.tools/desktop/publish/`, código de salida 0. Incluye runtime .NET/WPF 10.0.12 y SQLite nativo; ejecutable PE x64 con subsistema gráfico.
+- [x] Finales de línea conservados. `git diff --check` señala CRLF de los cuatro archivos ya modificados al empezar, incluidas las nuevas líneas CRLF de la solución; `git -c core.whitespace=cr-at-eol diff --check` pasa sin avisos.
+
+No se ejecutó Desktop ni se accedió a la base del perfil habitual. Las pruebas de Storage usan bases temporales y datos ficticios. No se repitieron los smoke del prototipo, ya que NativeHost y la extensión no cambiaron. La compilación y la publicación no sustituyen el smoke manual: su confirmación posterior por el usuario se registra en una sección independiente.
+
+## Corrección de privacidad del paquete · Fase 2.1
+
+El SDK instalado 10.0.401 separa el PDB de salida propio de los símbolos de las referencias. Desktop usa `CopyOutputSymbolsToPublishDirectory=false` y filtra los PDB de `ResolvedFileToPublish` tras `ComputeFilesToPublish`, conservando los símbolos de build. La primera corrección retiró 3 PDB, pero la inspección encontró rutas del perfil en `PersonalContext.Core.dll`, `PersonalContext.Desktop.dll` y `PersonalContext.Storage.dll`; esa salida intermedia tampoco es distribuible.
+
+Publicación final en una carpeta nueva y vacía, con propiedad global `PathMap` para Desktop y sus referencias:
+
+```bash
+projectSourceRoot=$(wslpath -w "$PWD")
+./.tools/dotnet/dotnet.exe publish src/PersonalContext.Desktop/PersonalContext.Desktop.csproj -c Release -r win-x64 --self-contained true --no-restore -p:PublishSingleFile=false -p:PublishTrimmed=false "-p:PathMap=$projectSourceRoot=/_/" -o .tools/desktop/publish-clean
+```
+
+- Publish: código de salida 0, sin errores ni advertencias. Log local en `.tools/desktop/phase-2.1-publish-clean.log` (no distribuir).
+- Inventario final: 406 archivos, 148.633.359 bytes; 402 DLL, 2 EXE y 2 JSON, 0 PDB. Runtime .NET/WPF y SQLite nativo presentes. Inventario con tamaños y SHA-256 en `.tools/desktop/phase-2.1-package-audit.json`, fuera del paquete.
+- Inspección del contenido de todos los archivos en ASCII/UTF-8 y UTF-16: 0 archivos con rutas absolutas de perfil Windows/WSL. Las 3 entradas CodeView de las DLL propias apuntan a rutas mapeadas; no hay PDB incrustados en ellas.
+- PDB de Core, Storage y Desktop conservados en las salidas de build.
+- Las carpetas anteriores `.tools/desktop/publish/` y `.tools/desktop/publish-no-symbols/` no son distribuibles. Solo `.tools/desktop/publish-clean/` es el candidato actual.
+
+No se repitieron restore ni pruebas: la corrección afecta al empaquetado y al mapeo de rutas de depuración; se validó mediante publish e inspección de artefactos. No se ejecutó Desktop ni se realizó smoke visual, commit o push. Ese registro corresponde a las comprobaciones automáticas de empaquetado anteriores al smoke confirmado por el usuario. Sigue pendiente la prueba en una máquina sin .NET instalado; esta revisión del paquete no es una auditoría exhaustiva de secretos o del historial.
+
+## Smoke manual de Fase 2.1 · Confirmación del usuario
+
+El usuario confirmó el siguiente smoke en Windows 11 Home 25H2, usando la cuenta local estándar de prueba `PCH-Smoke` y la carpeta completa `.tools/desktop/publish-clean/` copiada a una ruta con espacios. Es una **observación manual comunicada por el usuario**, no una comprobación automática ni una ejecución del agente.
+
+- Ventana sin consola y con respuesta normal.
+- Base creada bajo el perfil de prueba; contador inicial 0 y reapertura con 0.
+- Fixture ficticia válida con 2 conversaciones; contador 2 y reapertura con 2.
+- Fixture SQLite inválida: mensaje comprensible y contador «No disponible».
+- Restauración de la base ficticia válida: contador 2.
+
+La confirmación no acredita una máquina sin .NET instalado: esa prueba sigue pendiente. El instalador por usuario, el registro automático del puente y la prueba de instalación también siguen pendientes; **Fase 2 no está completada**. La captura experimental continúa aislada de SQLite.
+
+Esta actualización solo documenta la confirmación: no se accedió a la base del perfil habitual ni a datos de `PCH-Smoke`, y no se repitieron build, test ni publish.

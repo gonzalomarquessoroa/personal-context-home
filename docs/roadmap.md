@@ -21,3 +21,9 @@ El orden es orientativo. Cada fase termina con una capacidad verificable, no sol
 ## Puertas para declarar V1
 
 La captura automática debe medirse en un navegador soportado y mostrarse con estado de salud comprensible. Se debe registrar cobertura y lagunas de contenido, especialmente proyectos, cambios anteriores, otros dispositivos y app de escritorio. La prueba de instalación debe incluir el paso real de extensión y las advertencias de Windows. Una V1 no puede declararse completa solo porque el importador histórico funcione.
+
+## Incremento Fase 2.1
+
+Implementada la ventana WPF mínima .NET 10 en la solución: abre LocalStore en segundo plano, muestra estado, ruta y número de conversaciones, y presenta errores comprensibles. Indica que la captura de ChatGPT todavía no está conectada. Publicada localmente la carpeta Windows x64 autocontenida, sin single-file ni trimming; el usuario confirmó el smoke manual en una cuenta local estándar de Windows 11 Home 25H2. Esta observación es distinta de las comprobaciones automáticas; véase el [registro](tasks.md#smoke-manual-de-fase-21--confirmación-del-usuario).
+
+Fase 2 permanece **pendiente**. El smoke confirmado acredita la observación manual de arranque y respuesta normal, ruta con espacios, base bajo el perfil de prueba, reapertura con 0 y 2 conversaciones ficticias y error comprensible ante una fixture SQLite inválida, seguido de restauración válida con contador 2. Falta la ejecución en una máquina sin .NET instalado; no se acredita todavía la experiencia de instalación. Instalador y registro automático del puente son incrementos posteriores; el prototipo sigue aislado de SQLite.

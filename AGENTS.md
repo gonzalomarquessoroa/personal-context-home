@@ -26,6 +26,26 @@ node scripts/probe-extension-fixture.mjs
 node scripts/probe-worker-fixture.mjs
 ```
 
+Alternativa desde Bash en WSL, con el SDK **Windows** instalado (no `dotnet` Linux):
+
+```bash
+./.tools/dotnet/dotnet.exe --info
+./.tools/dotnet/dotnet.exe restore PersonalContext.sln --configfile NuGet.Config
+./.tools/dotnet/dotnet.exe test PersonalContext.sln -c Release --no-restore
+projectSourceRoot=$(wslpath -w "$PWD")
+./.tools/dotnet/dotnet.exe publish src/PersonalContext.Desktop/PersonalContext.Desktop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishTrimmed=false "-p:PathMap=$projectSourceRoot=/_/" -o .tools/desktop/publish-clean
+```
+
+Para Desktop, usar una salida nueva y vacía bajo `.tools/desktop/`; publish no
+elimina archivos antiguos. El proyecto excluye PDB del paquete y conserva los
+símbolos de build en `bin`/`obj`. El comando añade `PathMap` global para sanear
+las referencias al PDB dentro de las DLL, incluidas Core y Storage. Verificar ausencia de PDB y rutas personales
+en todos los archivos publicados, sin imprimir coincidencias. La antigua
+`.tools/desktop/publish/` contiene símbolos privados y no es distribuible; tampoco la salida intermedia
+`.tools/desktop/publish-no-symbols/`, con rutas en tres DLL.
+
+Conservar los finales de línea existentes; no añadir cambios solo de CRLF.
+Compilar/publicar con el SDK Windows desde WSL no acredita el smoke visual.
 Comprobar el código de salida de cada comando; detenerse ante fallos. WPF y el
 smoke del ejecutable Windows se verifican en Windows, no se dan por probados desde
 Linux/WSL. Ejecutar `git diff --check` al terminar; distinguir fallos previos de
